@@ -1,0 +1,7 @@
+#以下のファイルを無視する。
+__pycache__/
+sample/
+Config/
+Control/
+Data/
+to be replaced
