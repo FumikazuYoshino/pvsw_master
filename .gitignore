@@ -1,7 +1,7 @@
 #以下のファイルを無視する。
 __pycache__/
 sample/
-log.*
+*.log
 #Config/
 #Control/
 #Data/
