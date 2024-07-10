@@ -6,12 +6,13 @@ from os import walk, remove
 from logging import getLogger, config
 from typing import List
 from soft_config import SoftConfig
+from can_communication import CanCommunication
 from enum import Enum, Flag, auto
 from datetime import datetime
+from gpiozero import LED
 
 class PvswMaster:
     """Pvsw Master"""
-
     class SlaveStatus(Enum):
         """Slaveの状態"""
         STOP = auto()
@@ -19,19 +20,24 @@ class PvswMaster:
         ALARM = auto()
 
     class SlaveBase:
-        """Slaveの情報"""
+        """
+        Slaveの情報
+        """
 
         def __init__(self,
-                    address=0x00, 
-                    slave_type='', 
-                    status=None, 
+                    can_communication,
+                    address=0x00,
+                    slave_type='',
+                    status=None,
                     version=0x00):
+            self.can_communication = can_communication
             self.address = address
             self.slave_type = slave_type
             self.status: PvswMaster.SlaveStatus = status
             self.version = version
-            self.control_flag = False   #上位層からのcontrolファイルによる変更があるか否か
-        
+            #上位層からのcontrolファイルによる変更があるか否か
+            #これを見て通信を行うか判断する。
+            self.control_flag = False
         def get_system_dict(self):
             """
             スレーブのデータを渡す。
@@ -40,22 +46,50 @@ class PvswMaster:
                 'address': self.address,
                 'type': self.slave_type,
                 'status': self.status,
-                'version': self.version, 
+                'version': self.version,
             }
             return system_dict
+
+        async def refresh(self):
+            """
+            スレーブを最新情報に更新する。
+            """
+            #todo canの通信
+            #dummy とりあえずステータスを交互に切り替える。
+            #self.status = PvswMaster.SlaveStatus.STOP if self.status == PvswMaster.SlaveStatus.NORMAL else PvswMaster.SlaveStatus.NORMAL
+            self.status = 'NORMAL'
+            await asyncio.sleep(0.01)
+        
+        async def control(self):
+            """
+            スレーブへ通信で送信し、制御を行う
+            """
+            #Baseは何もしない
+            pass
+
+        async def sync(self):
+            """
+            スレーブの状態を同期させる。
+            つまりrefreshとcontrolを同時に行う。
+            """
+            await self.control()
+            await self.refresh()
+            
         
     class SlaveRsd(SlaveBase):
-        """Slaveの情報"""
-
+        """
+        Slaveの情報
+        """
         def __init__(self,
-                    address=0x10, 
-                    slave_type='rsd', 
-                    status= None, 
+                    can_communication,
+                    address=0x10,
+                    slave_type='rsd',
+                    status= None,
                     version=0x00,
                     pv_volt=0.0,
                     pv_current=0.0,
                     pv_sw=0x00):
-            super().__init__(address, slave_type, status, version)
+            super().__init__(can_communication, address, slave_type, status, version)
             self.pv_volt = pv_volt
             self.pv_current = pv_current
             self.pv_sw = pv_sw
@@ -65,6 +99,7 @@ class PvswMaster:
             """
             スレーブのデータを渡す。
             """
+            #更新したクラス内の変数をdict型にして返す。
             system_dict = super().get_system_dict()
             system_dict.update({
                 'pv_volt': self.pv_volt,
@@ -75,6 +110,27 @@ class PvswMaster:
             system_dict = {f'slave_{self.address:04x}': system_dict}
             return system_dict
         
+        async def refresh(self):
+            await super().refresh()
+            #todo canの通信
+            #dummy とりあえず電圧、電流値を0.01づつ上昇させる。
+            self.pv_volt += 0.01
+            self.pv_current += 0.01
+            #pv_swの制御値を反映させる。
+            self.pv_sw = self.pv_sw_set
+            await asyncio.sleep(0.01)
+        
+        async def control(self):
+            if self.control_flag:
+                await super().control()
+                #todo canの通信
+                await asyncio.sleep(0.01)
+                self.control_flag = False
+        
+        async def sync(self):
+            await self.control()
+            await self.refresh()
+        
         def set_control_json(self, json_data):
             """
             上位のjsonデータからスレーブの制御信号を受け取る。
@@ -82,6 +138,8 @@ class PvswMaster:
             for key, value in json_data.items():
                 if 'pv_sw' in key:
                     self.set_pv_sw(value)
+                    #フラグをセットする。
+                    self.control_flag = True
         
         def set_pv_sw(self, pvsw_control):
             """
@@ -90,6 +148,7 @@ class PvswMaster:
             self.control_flag = True
             self.pv_sw_set = pvsw_control
 
+    DC24V_EN_GPIO = 12
 
     def __init__(self):
         """
@@ -112,10 +171,15 @@ class PvswMaster:
         self.is_wet = False
         self.task_enable = False
         self.slaves = []
+        #gpioの設定
+        self.dc24V_en = LED(self.DC24V_EN_GPIO)
+        self.dc24V_en.off()
+        #CAN通信を行う。
+        self.can_communication = CanCommunication(self.soft_config.can_config ,self.soft_config.j1939_config)
         #試験用:スレーブを追加する。
-        self.slaves.append(PvswMaster.SlaveRsd())
+        self.slaves.append(PvswMaster.SlaveRsd(can_communication=self.can_communication))
 
-    async def start(self):
+    async def start(self, expire_time=0.0):
         """Masterの動作を開始する。"""
         #周期タスクを実行する。(並列実行)
         self.task_enable = True
@@ -123,8 +187,9 @@ class PvswMaster:
             self.task_system_data_cyclic(),
             self.task_control_file_check_cyclic()
             )
-        await asyncio.sleep(10)
-        self.task_enable = False
+        if expire_time > 0.0:
+            await asyncio.sleep(expire_time)
+            self.task_enable = False
         await task
         self.logger.info('task finished')
     
@@ -135,14 +200,20 @@ class PvswMaster:
         """slaveから情報を得るごとにcallbackで返す。"""
         self.callback.append(callback)
     
-    def get_slave_info(self):
-        """slave情報を取得する"""
-        self.__get_system_dict()
-    
     def download_slave_soft(self, address, binary_data):
         """指定したアドレスにバイナリデータのソフトをダウンロードする。"""
         pass
 
+    def set_24V_en(self, onoff):
+        """
+        24V電源の有効・無効を制御する。
+        """
+        if onoff :
+            self.dc24V_en.on()
+        else:
+            self.dc24V_en.off()
+        self.is_24V_en = onoff #todo 実際のものに変更する。
+            
     def __get_file_name(self):
         """
         周期的に保存するpythonデータの保存先ファイル名を返す。
@@ -164,7 +235,6 @@ class PvswMaster:
             remove(self.soft_config.file_config.system_data_path + '/' + file_names.pop(0))
         
         return self.soft_config.file_config.system_data_path + '/' + file_names[-1]
-        
 
     def __save_system_data(self, master_dict):
         self.logger.info('save data.json')
@@ -212,7 +282,9 @@ class PvswMaster:
         self.__set_control_slaves(json_data['slave'])
 
     def __set_control_master(self, json_data):
-        pass
+        for key, value in json_data.items():
+            if '24V_en' in key:
+                self.set_24V_en(value)
 
     def __set_control_slaves(self, json_data):
         for slave_key, slave_value in json_data.items():
@@ -229,10 +301,15 @@ class PvswMaster:
             #もし指定アドレスのslaveが見つからない場合は、ログを残す。
             if slave_found_flg == False:
                 self.logger.warning('In control.json, ' + slave_key + ' not found')
-            
-
+    
+    async def __apply_control_to_slaves(self):
+        """
+        __set_control_slavesで反映したcontrolをslaveに通信で反映させる。
+        """
+        for slave in self.slaves:
+            await slave.control()
           
-    def __load_control(self):
+    def __load_control_file(self):
         file_names = []
         #ディレクトリ内のファイルを検索、ソート
         for _, _, files in walk(self.soft_config.file_config.control_path):
@@ -260,10 +337,12 @@ class PvswMaster:
                 #その他のエラーを記録する。
                 self.logger.error('%s', e)
 
-    def __get_system_dict(self):
+    async def __get_system_dict(self):
         """
         slaveも含め、周期的に保存するデータをdictにして返す。
         """
+        for slave in self.slaves:
+            await slave.refresh()
         slave_dict = {}
         for slave in self.slaves:
             slave_dict.update(slave.get_system_dict())
@@ -285,7 +364,7 @@ class PvswMaster:
         """
         while self.task_enable:
             slp_interval = asyncio.sleep(self.master_interval_time)
-            self.__save_system_data(self.__get_system_dict())
+            self.__save_system_data(await self.__get_system_dict())
             self.logger.info('cyclic done.')
             await slp_interval
     
@@ -295,5 +374,6 @@ class PvswMaster:
         """
         while self.task_enable:
             slp_interval = asyncio.sleep(self.control_filecheck_interval_time)
-            self.__load_control()
+            self.__load_control_file()
+            await self.__apply_control_to_slaves()
             await slp_interval

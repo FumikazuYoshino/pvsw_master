@@ -63,20 +63,22 @@ class SoftConfig(object):
         """
         J1939設定
         """
-        def __init__(self, master_address=0x01, industry_group='Industrial', manufacture_code=0x100, identity_number=0x10):
+        def __init__(self, master_address=0x01, industry_group='Industrial', manufacture_code=0x100, identity_number=0x10, max_cmdt_packets=10):
             self.master_address = master_address
             self.industry_group = industry_group
             self.manufacture_code = manufacture_code
             self.identity_number = identity_number
+            self.max_cmdt_packets = max_cmdt_packets
         
         def get_from_file(self, json_data):
             """
             JSONデータから設定を格納する。
             """
-            self.master_address = int(json_data['master_address'], 0)
+            self.master_address = json_data['master_address']
             self.industry_group = json_data['industry_group']
-            self.manufacture_code = int(json_data['manufacture_code'], 0)
-            self.identity_number = int(json_data['identity_number'], 0)
+            self.manufacture_code = json_data['manufacture_code']
+            self.identity_number = json_data['identity_number']
+            self.max_cmdt_packets = json_data['max_cmdt_packets']
 
 
     class PvswConfig:

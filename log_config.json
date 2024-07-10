@@ -18,7 +18,7 @@
             "class": "logging.FileHandler",
             "level": "INFO",
             "formatter": "simple",
-            "filename": "to be replaced"
+            "filename": "log.txt"
         }
     },
 
@@ -34,6 +34,11 @@
             "propagate": false
         },
         "j1939": {
+            "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "can_communication": {
             "level": "DEBUG",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
