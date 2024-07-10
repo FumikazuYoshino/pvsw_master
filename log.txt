@@ -1,0 +1,20 @@
+2024-07-10 22:45:59,178 soft_config:120 __read_config [INFO]: read config file.
+2024-07-10 22:45:59,307 j1939.electronic_control_unit:53 __init__ [INFO]: Starting ECU async thread
+2024-07-10 22:45:59,493 j1939.electronic_control_unit:121 connect [INFO]: Connected to 'socketcan channel 'can0''
+2024-07-10 22:45:59,496 can_communication:43 __init__ [INFO]: can start
+2024-07-10 22:45:59,522 pvsw_master:240 __save_system_data [INFO]: save data.json
+2024-07-10 22:45:59,524 pvsw_master:272 __save_system_data [INFO]: create system_data.json
+2024-07-10 22:45:59,526 pvsw_master:368 task_system_data_cyclic [INFO]: cyclic done.
+2024-07-10 22:46:01,550 pvsw_master:240 __save_system_data [INFO]: save data.json
+2024-07-10 22:46:01,551 pvsw_master:268 __save_system_data [INFO]: dict add.
+2024-07-10 22:46:01,553 pvsw_master:368 task_system_data_cyclic [INFO]: cyclic done.
+2024-07-10 22:46:03,576 pvsw_master:240 __save_system_data [INFO]: save data.json
+2024-07-10 22:46:03,578 pvsw_master:268 __save_system_data [INFO]: dict add.
+2024-07-10 22:46:03,580 pvsw_master:368 task_system_data_cyclic [INFO]: cyclic done.
+2024-07-10 22:46:05,603 pvsw_master:240 __save_system_data [INFO]: save data.json
+2024-07-10 22:46:05,606 pvsw_master:268 __save_system_data [INFO]: dict add.
+2024-07-10 22:46:05,619 pvsw_master:368 task_system_data_cyclic [INFO]: cyclic done.
+2024-07-10 22:46:07,642 pvsw_master:240 __save_system_data [INFO]: save data.json
+2024-07-10 22:46:07,645 pvsw_master:268 __save_system_data [INFO]: dict add.
+2024-07-10 22:46:07,651 pvsw_master:368 task_system_data_cyclic [INFO]: cyclic done.
+2024-07-10 22:46:09,654 pvsw_master:194 start [INFO]: task finished

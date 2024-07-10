@@ -1,0 +1,78 @@
+{
+    "master_data_00000000": {
+        "time": "2024-07-10T22:46:01.549794+09:00",
+        "address": 1,
+        "temperature": 25.0,
+        "is_ac_in": false,
+        "is_24V_en": false,
+        "is_wet": false,
+        "slave": {
+            "slave_0010": {
+                "address": 16,
+                "type": "rsd",
+                "status": "NORMAL",
+                "version": 0,
+                "pv_volt": 0.02,
+                "pv_current": 0.02,
+                "pv_sw": 0
+            }
+        }
+    },
+    "master_data_00000001": {
+        "time": "2024-07-10T22:46:03.576342+09:00",
+        "address": 1,
+        "temperature": 25.0,
+        "is_ac_in": false,
+        "is_24V_en": false,
+        "is_wet": false,
+        "slave": {
+            "slave_0010": {
+                "address": 16,
+                "type": "rsd",
+                "status": "NORMAL",
+                "version": 0,
+                "pv_volt": 0.03,
+                "pv_current": 0.03,
+                "pv_sw": 0
+            }
+        }
+    },
+    "master_data_00000002": {
+        "time": "2024-07-10T22:46:05.603237+09:00",
+        "address": 1,
+        "temperature": 25.0,
+        "is_ac_in": false,
+        "is_24V_en": false,
+        "is_wet": false,
+        "slave": {
+            "slave_0010": {
+                "address": 16,
+                "type": "rsd",
+                "status": "NORMAL",
+                "version": 0,
+                "pv_volt": 0.04,
+                "pv_current": 0.04,
+                "pv_sw": 0
+            }
+        }
+    },
+    "master_data_00000003": {
+        "time": "2024-07-10T22:46:07.642394+09:00",
+        "address": 1,
+        "temperature": 25.0,
+        "is_ac_in": false,
+        "is_24V_en": false,
+        "is_wet": false,
+        "slave": {
+            "slave_0010": {
+                "address": 16,
+                "type": "rsd",
+                "status": "NORMAL",
+                "version": 0,
+                "pv_volt": 0.05,
+                "pv_current": 0.05,
+                "pv_sw": 0
+            }
+        }
+    }
+}

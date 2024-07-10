@@ -1,0 +1,31 @@
+{
+    "can_config":{
+        "bitrate": 125000,
+        "bustype": "socketcan",
+        "channel": "can0"
+    },
+    
+    "j1939_config":{
+        "master_address": 1,
+        "industry_group": "Industrial",
+        "manufacture_code": 256,
+        "identity_number": 16,
+        "max_cmdt_packets": 3
+    },
+
+    "pvsw_config":{
+        "master_interval_time": 2,
+        "control_filecheck_interval_time": 0.25
+    },
+
+    "file_config":{
+        "config_path": "./Config",
+        "control_path": "./Control",
+        "data_path": "./Data",
+        "config_name": "config.json",
+        "control_name": "control.json",
+        "system_data_name": "data.json",
+        "system_data_len": 1024,
+        "system_data_file_num": 10
+    }
+}

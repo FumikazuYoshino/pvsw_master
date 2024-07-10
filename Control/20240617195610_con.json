@@ -1,0 +1,12 @@
+{
+    "master":{
+        "24V_en": true,
+        "kill": false
+    },
+
+    "slave":{
+        "slave_0010":{
+            "pv_sw" : 0
+        }
+    }
+}
