@@ -175,7 +175,8 @@ class PvswMaster:
         self.dc24V_en = LED(self.DC24V_EN_GPIO)
         self.dc24V_en.off()
         #CAN通信を行う。
-        self.can_communication = CanCommunication(self.soft_config.can_config ,self.soft_config.j1939_config)
+        #self.can_communication = CanCommunication(self.soft_config.can_config ,self.soft_config.j1939_config)
+        self.can_communication = None
         #試験用:スレーブを追加する。
         self.slaves.append(PvswMaster.SlaveRsd(can_communication=self.can_communication))
 

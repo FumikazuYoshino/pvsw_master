@@ -17,7 +17,9 @@ if __name__ == "__main__":
     args = sys.argv
     set_logger()
     pvsw = PvswMaster()
-    asyncio.run(pvsw.start(float(args[1])))
+    #標準入力にデータが入っている場合のみ入力する。
+    time = float(args[1]) if len(args) == 2 else 0.0
+    asyncio.run(pvsw.start(time))
     #can_device = CanDevice()
     #time.sleep(10)
     #del can_device
