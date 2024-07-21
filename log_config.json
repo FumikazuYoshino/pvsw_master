@@ -53,6 +53,11 @@
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         }
+        "lis2dh12": {
+            "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        }
     },
 
     "root": {
