@@ -15,16 +15,18 @@
 
     "pvsw_config":{
         "master_interval_time": 2,
-        "control_filecheck_interval_time": 0.25
+        "control_filecheck_interval_time": 0.2
     },
 
     "file_config":{
-        "config_path": "./Config",
-        "control_path": "./Control",
-        "data_path": "./Data",
+        "config_path": "/home/pi/App/Config",
+        "control_path": "/home/pi/App/Control",
+        "data_path": "/home/pi/App/Data",
+	"script_path": "/home/pi/App/Script",
         "config_name": "config.json",
         "control_name": "control.json",
         "system_data_name": "data.json",
+	"script_name": "mySync.sh",
         "system_data_len": 1024,
         "system_data_file_num": 10
     }

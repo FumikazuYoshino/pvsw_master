@@ -1,5 +1,6 @@
-from logging import getLogger, config
+from logging import getLogger
 import json
+
 
 class SoftConfig(object):
     """
@@ -10,15 +11,10 @@ class SoftConfig(object):
         """
         各種Fileのパラメータ
         """
-        def __init__(self,
-                    config_path='./Config',
-                    control_path='./Control',
-                    data_path='./Data',
-                    config_name='config.json',
-                    control_name='control.json',
-                    system_data_name='data.json',
-                    system_data_len=1024,
-                    system_data_file_num=10):
+        def __init__(self, config_path='./Config', control_path='./Control',
+                     data_path='./Data', config_name='config.json',
+                     control_name='control.json', system_data_name='data.json',
+                     system_data_len=1024, system_data_file_num=10):
             self.config_path = config_path
             self.control_path = control_path
             self.system_data_path = data_path,
@@ -32,15 +28,14 @@ class SoftConfig(object):
             """
             上位のJSONファイルから設定を読み込む
             """
-            self.config_path = json_data['config_path']
             self.control_path = json_data['control_path']
             self.system_data_path = json_data['data_path']
-            self.config_name = json_data['config_name']
+            self.script_path = json_data['script_path']
             self.control_name = json_data['control_name']
             self.system_data_name = json_data['system_data_name']
             self.system_data_len = json_data['system_data_len']
             self.system_data_file_num = json_data['system_data_file_num']
-            
+            self.script_name = json_data['script_name']
 
     class CanConfig:
         """
@@ -80,7 +75,6 @@ class SoftConfig(object):
             self.identity_number = json_data['identity_number']
             self.max_cmdt_packets = json_data['max_cmdt_packets']
 
-
     class PvswConfig:
         """
         Pvswの設定
@@ -93,12 +87,18 @@ class SoftConfig(object):
             """
             JSONデータから設定を格納する。
             """
+            # Slaveからのデータを読み込む周期
             self.master_interval_time = json_data['master_interval_time']
+            # controlファイルの更新チェック周期
             self.control_filecheck_interval_time = json_data['control_filecheck_interval_time']
+            # accelセンサのデータ取得周期
+            self.accel_sensor_interval_time = json_data['accel_sensor_interval_time']
 
-
-    #Configファイルの読込
-    CONFIG_JSON_PATH = './Config/config.json'
+    # Configファイルの読込
+    CONFIG_PATH = '/home/pi/App/Config/'
+    CONFIG_NAME = 'config.json'
+    # Configファイル読み込み失敗対策としてdefault_config.jsonを設ける。
+    DEF_CONFIG_NAME = 'default_config.json'
 
     def __new__(cls):
         if not hasattr(cls, '_instance'):
@@ -107,11 +107,12 @@ class SoftConfig(object):
         
     def __init__(self):
         self.logger = getLogger(__name__)
-        self.file_config = SoftConfig.FileConfig()
+        # config.jsonの名前と場所は固定する。
+        self.file_config = SoftConfig.FileConfig(config_path=self.CONFIG_PATH, config_name=self.CONFIG_NAME)
         self.can_config = SoftConfig.CanConfig()
         self.j1939_config = SoftConfig.J1939Config()
         self.pvsw_config = SoftConfig.PvswConfig()
-        self.read_file(self.CONFIG_JSON_PATH)
+        self.read_file(self.CONFIG_PATH + self.CONFIG_NAME)
     
     def __read_config(self, json_data):
         """
@@ -124,13 +125,21 @@ class SoftConfig(object):
             self.j1939_config.get_from_file(json_data['j1939_config'])
             self.pvsw_config.get_from_file(json_data['pvsw_config'])
         except Exception as e:
-            self.logger.error('error on '+ e)
+            self.logger.error('error on %s', e)
+            self.logger.info('read ' + self.CONFIG_PATH + self.DEF_CONFIG_NAME)
+            # DEF_CONFIG_JSON_PATHで再設定する。
+            self.read_file(self.CONFIG_PATH + self.DEF_CONFIG_NAME)
 
-    
-    def read_file(self, config_path=CONFIG_JSON_PATH):
+    def read_file(self, config_path=CONFIG_PATH + CONFIG_NAME):
         """
         設定ファイルを読み込む。
         """
-        with open(config_path, 'r', encoding='utf-8') as file:
-            json_load = json.load(file)
-        self.__read_config(json_load)
+        try:
+            with open(config_path, 'r', encoding='utf-8') as file:
+                json_load = json.load(file)
+            self.__read_config(json_load)
+        except Exception as e:
+            self.logger.error('error on %s', e)
+            self.logger.info('read ' + self.CONFIG_PATH + self.DEF_CONFIG_NAME)
+            # DEF_CONFIG_JSON_PATHで再設定する。
+            self.read_file(self.CONFIG_PATH + self.DEF_CONFIG_NAME)

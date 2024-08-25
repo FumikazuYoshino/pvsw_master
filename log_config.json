@@ -14,21 +14,29 @@
             "formatter": "simple",
             "stream": "ext://sys.stdout"
         },
-        "fileHandler": {
-            "class": "logging.FileHandler",
-            "level": "INFO",
+    	"fileHandler": {
+	    "class": "logging.handlers.RotatingFileHandler",
+	    "level": "INFO",
             "formatter": "simple",
-            "filename": "log.log"
-        }
+            "filename": "log.log",
+	    "encoding": "utf-8",
+	    "maxBytes": 1048576,
+    	    "backupCount": 10
+    	}
     },
 
     "loggers": {
         "__main__": {
-            "level": "INFO",
+            "level": "DEBUG",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
-        "same_hierarchy": {
+        "file_process": {
+            "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "lis2dh12": {
             "level": "DEBUG",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
@@ -43,17 +51,17 @@
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
-        "soft_config": {
-            "level": "DEBUG",
-            "handlers": ["consoleHandler", "fileHandler"],
-            "propagate": false
-        },
         "pvsw_master": {
             "level": "DEBUG",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
-        "lis2dh12": {
+        "seismometer": {
+            "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "soft_config": {
             "level": "DEBUG",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
