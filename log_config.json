@@ -32,12 +32,17 @@
             "propagate": false
         },
         "file_process": {
-            "level": "DEBUG",
+            "level": "INFO",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "adc081c021": {
+            "level": "INFO",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
         "lis2dh12": {
-            "level": "DEBUG",
+            "level": "INFO",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
@@ -56,8 +61,18 @@
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },
-        "seismometer": {
+        "pvsw_slave": {
             "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "pvsw_parameter": {
+            "level": "DEBUG",
+            "handlers": ["consoleHandler", "fileHandler"],
+            "propagate": false
+        },
+        "seismometer": {
+            "level": "INFO",
             "handlers": ["consoleHandler", "fileHandler"],
             "propagate": false
         },

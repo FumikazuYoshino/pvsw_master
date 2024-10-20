@@ -8,9 +8,9 @@
     "j1939_config":{
         "master_address": 1,
         "industry_group": "Industrial",
-        "manufacture_code": 256,
+        "manufacture_code": 16,
         "identity_number": 16,
-        "max_cmdt_packets": 3
+        "max_cmdt_packets": 10 
     },
 
     "pvsw_config":{
@@ -24,6 +24,8 @@
         "data_path": "/home/pi/App/Data",
 	"script_path": "/home/pi/App/Script",
         "config_name": "config.json",
+	"parameter_master_name": "parameterListMaster.json",
+	"parameter_slave_name": "parameterListSlave.json",
         "control_name": "control.json",
         "system_data_name": "data.json",
 	"script_name": "mySync.sh",

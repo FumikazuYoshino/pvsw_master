@@ -1,7 +1,6 @@
 from logging import getLogger
 import json
 
-
 class SoftConfig(object):
     """
     ソフト全体で共有する各種パラメータを格納
@@ -14,16 +13,21 @@ class SoftConfig(object):
         def __init__(self, config_path='./Config', control_path='./Control',
                      data_path='./Data', config_name='config.json',
                      control_name='control.json', system_data_name='data.json',
+                     parameter_list_master_name="parameterListMaster.json",
+                     parameter_list_slave_name='parameterListSlave',
                      system_data_len=1024, system_data_file_num=10):
             self.config_path = config_path
             self.control_path = control_path
-            self.system_data_path = data_path,
+            self.system_data_path = data_path
             self.config_name = config_name
             self.control_name = control_name
-            self.system_data_name = system_data_name,
+            self.system_data_name = system_data_name
             self.system_data_len = system_data_len
             self.system_data_file_num = system_data_file_num
-        
+            self.parameter_list_master_name = parameter_list_master_name
+            # slaveの種類は複数に渡るため、共通するbasenameを指定する。
+            self.parameter_list_slave_name = parameter_list_slave_name
+
         def get_from_file(self, json_data):
             """
             上位のJSONファイルから設定を読み込む
@@ -36,6 +40,8 @@ class SoftConfig(object):
             self.system_data_len = json_data['system_data_len']
             self.system_data_file_num = json_data['system_data_file_num']
             self.script_name = json_data['script_name']
+            self.parameter_list_master_name = json_data['parameter_list_master_name']
+            self.parameter_list_slave_name = json_data['parameter_list_slave_name']
 
     class CanConfig:
         """

@@ -58,7 +58,7 @@ class FileProcess:
         await asyncio.create_subprocess_shell(cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
     async def save_system_data(self, master_dict):
-        self.logger.info('save data.json')
+        self.logger.debug('save data.json')
         try:
             system_file_name = self.__get_system_data_file_name()
             # json.loadを行うためには'r+'で開く必要がある。
@@ -87,7 +87,7 @@ class FileProcess:
                         json.dump({}, new_file_name, indent=4)
                 # 一旦ファイル内容を消去し、その後追加したデータを格納する。
                 json_data.update({key: master_dict})
-                self.logger.info('dict add.')
+                self.logger.debug('dict add.')
                 json.dump(json_data, file, indent=4)
             # スレーブとサーバのファイルを同期させる。
             await self.__do_script('-U', self.file_config.system_data_path, 'Data')
@@ -122,7 +122,7 @@ class FileProcess:
         file_name = file_names[-1]
 
         try:
-            file_name_with_path = self.file_config.control_path + file_name
+            file_name_with_path = self.file_config.control_path + '/' + file_name
             mtime = datetime.fromtimestamp(Path(file_name_with_path).stat().st_mtime)
             if self.last_control_updatetime == mtime:
                 # タイムスタンプの更新日が前回読み込んだものと同じ場合は無視する。

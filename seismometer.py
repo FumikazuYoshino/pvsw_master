@@ -9,6 +9,7 @@ class Seismometer:
     気象庁の公開しているアルゴリズムを参考
     https://www.data.jma.go.jp/eqev/data/kyoshin/kaisetsu/calc_sindo.html
     """
+    SCALE_MIN = 2.5  # 実用的なscaleの値の最小値。これ以下はノイズで埋もれる。
 
     def __init__(self, fs, window_sec):
         """
@@ -20,6 +21,7 @@ class Seismometer:
         self.x_axis = []
         self.y_axis = []
         self.z_axis = []
+        self.scale = 0.0
         self.fs = fs
         self.axis_data_len = int(fs * window_sec)  # 判定に使用するデータを設定
 
@@ -56,7 +58,7 @@ class Seismometer:
             self.y_axis = self.y_axis[diff_len:]
             self.z_axis = self.z_axis[diff_len:]
 
-    def get_scale(self) -> (bool, float):
+    async def get_scale(self) -> (bool, float):
         """
         計測震度の計算
         計測震度は三軸のデータにフィルタを掛けて合成したうえで、

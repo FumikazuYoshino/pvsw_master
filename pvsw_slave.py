@@ -1,130 +1,85 @@
 import asyncio
+import struct
+from can_communication import CanCommunication
 from enum import IntFlag
+from pvsw_parameter import PvswParam
+from logging import getLogger
 
-class SlaveBase:
+class PvswSlave:
     """
     Slaveの情報
     """
+    def __init__(self, can_communication, param):
+        self.__can_communication = can_communication
+        self.__param = param
+        self.__j1939_address = 8
+        self.__logger = getLogger(__name__)
 
-    class SlaveStatus(IntFlag):
-        """Slaveの状態"""
-        STOP    = 0
-        NORMAL  = 1
-        ALARM   = 2
-
-    def __init__(self, can_communication, address=0x00, slave_type='',
-                 status=None, version=0x00):
-        self.can_communication = can_communication
-        self.address = address
-        self.slave_type = slave_type
-        self.status: SlaveBase.SlaveStatus = status
-        self.version = version
-        # 上位層からのcontrolファイルによる変更があるか否か
-        # これを見て通信を行うか判断する。
-        self.control_flag = False
-
-    def get_system_dict(self):
-        """
-        スレーブのデータを渡す。
-        """
-        system_dict = {
-            'address': self.address,
-            'type': self.slave_type,
-            'status': int(self.status),
-            'version': self.version,
-        }
-        return system_dict
-
-    async def refresh(self):
-        """
-        スレーブを最新情報に更新する。
-        """
-        # todo canの通信
-        # dummy とりあえずステータスを交互に切り替える。
-        self.status = SlaveBase.SlaveStatus.STOP \
-            if self.status == SlaveBase.SlaveStatus.NORMAL \
-            else SlaveBase.SlaveStatus.NORMAL
-        await asyncio.sleep(0.01)
-
-    async def control(self):
+    async def set_control(self, control):
         """
         スレーブへ通信で送信し、制御を行う
         """
-        # Baseは何もしない
-        pass
+        for con_key, con_value in control.items():
+            for para_key, para_value in self.__param['parameters'].items():
+                if con_key == para_key:
+                    para_value[para_key]['value'] = con_value
+                    await self.send(['C', 'W'], para_value[para_key])
 
-    async def sync(self):
+    async def get_system_data(self):
         """
-        スレーブの状態を同期させる。
-        つまりrefreshとcontrolを同時に行う。
+        テスト用に簡略化している。todo汎化
         """
-        await self.control()
-        await self.refresh()
-        
-    
-class SlaveRsd(SlaveBase):
-    """
-    Slaveの情報
-    """
-    def __init__(self, can_communication, address=0x10, slave_type='rsd',
-                 status=None, version=0x00, pv_volt=0.0, pv_current=0.0,
-                 pv_sw=0x00):
-        super().__init__(can_communication, address, slave_type, status,
-                         version)
-        self.pv_volt = pv_volt
-        self.pv_current = pv_current
-        self.pv_sw = pv_sw
-        self.pv_sw_set = 0
-    
-    def get_system_dict(self):
+        self.__logger.info('can comm start!')
+        await self.send(['C', 'R'], self.__param['parameters']['programName'])
+        await self.send(['C', 'R'], self.__param['parameters']['volt'])
+
+    async def send(self, pre_command, para_value):
         """
-        スレーブのデータを渡す。
+        can通信を実行する。
         """
-        # 更新したクラス内の変数をdict型にして返す。
-        system_dict = super().get_system_dict()
-        system_dict.update({
-            'pv_volt': self.pv_volt,
-            'pv_current': self.pv_current,
-            'pv_sw': self.pv_sw,
-        })
-        # 継承元とは異なり、一塊のDictキーに集約して上位に渡す。
-        system_dict = {f'slave_{self.address:04x}': system_dict}
-        return system_dict
-    
-    async def refresh(self):
-        await super().refresh()
-        # todo canの通信
-        # dummy とりあえず電圧、電流値を0.01づつ上昇させる。
-        self.pv_volt += 0.01
-        self.pv_current += 0.01
-        #pv_swの制御値を反映させる。
-        self.pv_sw = self.pv_sw_set
-        await asyncio.sleep(0.01)
-    
-    async def control(self):
-        if self.control_flag:
-            await super().control()
-            # todo canの通信
-            await asyncio.sleep(0.01)
-            self.control_flag = False
-    
-    async def sync(self):
-        await self.control()
-        await self.refresh()
-    
-    def set_control_json(self, json_data):
+        data = [ord(char) for char in pre_command]
+        data.extend(byte for byte in struct.pack('<H', int(para_value['command'], 16)))
+        if pre_command == ['C', 'W']:
+            match para_value.type:
+                case 'uint':
+                    byte_string = struct.pack('<I', para_value['value'])
+                case 'int':
+                    byte_string = struct.pack('<i', para_value['value'])
+                case 'float':
+                    byte_string = struct.pack('<f', para_value['value'])
+                case _:
+                    return
+            data.extend(byte for byte in byte_string)
+        self.__logger.info(f'data {data}')
+        self.__can_communication.ca.send_pgn(0, CanCommunication.PGN.ProprietaryA >> 8, self.__j1939_address, 6, data)
+        (sa, data) = await self.recv()
+        # フォーマットを整える。
+        match para_value['type']['type']:
+            case 'uint':
+                value = struct.unpack('<I', bytes(data))[0]
+            case 'int':
+                value = struct.unpack('<i', bytes(data))[0]
+            case 'float':
+                value = struct.unpack('<f', bytes(data))[0]
+            case 'str' | 'string':
+                value = bytes(data).decode('ascii')
+            case _:
+                return
+        para_value['type']['value'] = value
+
+    async def recv(self):
         """
-        上位のjsonデータからスレーブの制御信号を受け取る。
+        can通信の受信を行う。
+        受信が完了するまでawaitで待機する。
         """
-        for key, value in json_data.items():
-            if 'pv_sw' in key:
-                self.set_pv_sw(value)
-                # フラグをセットする。
-                self.control_flag = True
-    
-    def set_pv_sw(self, pvsw_control):
-        """
-        スレーブのPVSWを制御する。
-        """
-        self.control_flag = True
-        self.pv_sw_set = pvsw_control
+        future = asyncio.get_event_loop().create_future()
+
+        def on_recv(sa, data):
+            future.set_result((sa, data))
+
+        self.__can_communication.set_on_ca_received(on_recv)
+
+        result = await future
+        self.__can_communication.del_on_ca_received(on_recv)
+        return result
+
